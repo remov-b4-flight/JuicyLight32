@@ -62,7 +62,7 @@ extern TIM_HandleTypeDef htim1,htim3;
 
 extern uint8_t	LPCount; //Timer0Count value when long push determined
 extern bool		ReleaseIgnoreFlag; //for passing 'Release' after Long press
-extern uint8_t	DPcount;		//Timer0Count
+extern uint8_t	DPCount;		//Timer0Count
 extern uint8_t	Timer3Count; //0~250 2000ms count
 extern bool		SinglePushFlag;
 extern bool		DoublePushFlag;
@@ -157,15 +157,15 @@ void EXTI0_1_IRQHandler(void)
   if (HAL_GPIO_ReadPin(MOD_SW_GPIO_Port,MOD_SW_Pin) == MOD_SW_OFF){
 	  LPCount = LPCOUNT_STOP;
 	  if (ReleaseIgnoreFlag){
-		  ReleaseIgnoreFlag = 0;
+		  ReleaseIgnoreFlag = false;
 		  goto exits;
 	  }
-//      if (DPcount >= TIM3_COUNT_1SEC) {
-          SinglePushFlag=true;
-//      } else if(DPcount != 0){
-//          DoublePushFlag=true;
-//      }
-      DPcount = 0;
+      if (DPCount >= TIM3_COUNT_0R3S) {
+          SinglePushFlag = true;
+      } else{
+          DoublePushFlag = true;
+      }
+      DPCount = DPCOUNT_CLEAR;
   }else{
       LPCount = 1;
   }
@@ -211,8 +211,8 @@ void TIM3_IRQHandler(void)
 			LPCount = LPCOUNT_STOP;
 		}
 	}
-	if (DPcount < TIM3_COUNT_1SEC) {
-		DPcount++;
+	if (DPCount < TIM3_COUNT_0R3S) {
+		DPCount++;
 	}
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);

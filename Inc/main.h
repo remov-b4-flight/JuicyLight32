@@ -58,22 +58,17 @@ typedef union leddata_t {
 } LEDDATA;
 
 enum{   //constants for operation mode.
-	MODE_OFF = 0,
-    MODE_MONO_STATIC_RED,
-    MODE_MONO_STATIC_BLUE,
-    MODE_MONO_STATIC_GREEN,
-    MODE_MONO_STATIC_WHITE,
-    MODE_MONO_STATIC_YELLOW,
-    MODE_MONO_STATIC_MAGENTA,
-    MODE_MONO_STATIC_CYAN,
-    MODE_MONO_STATIC_PINK,
-    MODE_MONO_STATIC_ORANGE,
-	//
-	MODE_DYNAMIC_DD
-	//
+    MODE_STATIC = 0,
+    MODE_RAINBOW,
+	MODE_DYNAMIC
 };
-#define MODE_STATIC_MAX    9
-#define MODE_DYNAMIC_MAX	1
+#define MODE_MAX    2
+enum{
+	PATTERN_DYNAMIC_DD,
+	PATTERN_DYNAMIC_FADE,
+
+};
+#define PATTERN_DYNAMIC_MAX	2
 
 enum{   //constants for expressing color.
 	COLOR_OFF = 0,
@@ -101,7 +96,10 @@ enum{   //constants for expressing color.
 
 #define TIM3_COUNT_2SEC 250
 #define TIM3_COUNT_1SEC 125
+#define TIM3_COUNT_0R3S 38
+
 #define LPCOUNT_STOP 0
+#define DPCOUNT_CLEAR 0
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

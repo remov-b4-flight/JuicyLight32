@@ -58,22 +58,30 @@ const LEDDATA LEDTable[COLOR_MAX] = {
 		{.rgbw = {.r=LHLF,.g=LHLF,.b=LOFF,.w=LOFF}},//COLOR_YELLOW,
 		{.rgbw = {.r=LHLF,.g=LOFF,.b=LHLF,.w=LOFF}},//COLOR_MAGENTA,
 		{.rgbw = {.r=LOFF,.g=LHLF,.b=LHLF,.w=LOFF}},//COLOR_CYAN,
-		{.rgbw = {.r=LHLF,.g=LOFF,.b=LHLF,.w=LMIN}},//COLOR_PINK,
+		{.rgbw = {.r=LMAX,.g=LOFF,.b=LQTR,.w=LQTR}},//COLOR_PINK,
 		{.rgbw = {.r=LMAX,.g=LQTR,.b=LOFF,.w=LOFF}},//COLOR_ORANGE,
+};
+
+const uint8_t	LEDRainbow[LED_COUNT]={
+		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE,
+		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE
 };
 
 uint8_t		LEDColor[LED_COUNT];
 uint16_t	LEDPulse[TOTAL_BITS];	//Data formed PWM width send to LED
 
 //Switch and mode control
-uint8_t LightMode;		//Set from switch
+uint8_t Color;		//Set from switch
+uint8_t LightMode;
+uint8_t	Pattern = PATTERN_DYNAMIC_DD;
+
 bool	DynamicFlag;
 bool	ReleaseIgnoreFlag; //for passing 'Release' after Long press
 bool	BlightFlag;
 //Driven by Timer3 (8ms interval)
 uint32_t Timer3Count;	//0~250 2000ms count
 uint8_t LPCount;		//Long Push count
-uint8_t DPcount;		//Double Push count
+uint8_t DPCount;		//Double Push count
 //
 bool	SinglePushFlag;
 bool	DoublePushFlag;
@@ -97,8 +105,13 @@ static void MX_TIM14_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void SetLEDmonoColor(uint8_t mono_color){
+void SetLEDMonoColor(uint8_t mono_color){
 	memset(LEDColor,mono_color,LED_COUNT);
+	SendFlag = true;
+}
+
+void SetLEDRainbow(){
+	memcpy(LEDColor,LEDRainbow,LED_COUNT);
 	SendFlag = true;
 }
 
@@ -111,10 +124,10 @@ void Color2Pulse(){
 		uint8_t c = LEDColor[led];
 		leddata.n = LEDTable[c].n;
 		if(BlightFlag){
-			if(leddata.rgbw.r != LOFF) leddata.rgbw.r |= LBRIGHT;
-			if(leddata.rgbw.g != LOFF) leddata.rgbw.g |= LBRIGHT;
-			if(leddata.rgbw.b != LOFF) leddata.rgbw.b |= LBRIGHT;
-			if(leddata.rgbw.w != LOFF) leddata.rgbw.w |= LBRIGHT;
+			if(leddata.rgbw.r > LQTR) leddata.rgbw.r |= LBRIGHT;
+			if(leddata.rgbw.g > LQTR) leddata.rgbw.g |= LBRIGHT;
+			if(leddata.rgbw.b > LQTR) leddata.rgbw.b |= LBRIGHT;
+			if(leddata.rgbw.w > LQTR) leddata.rgbw.w |= LBRIGHT;
 		}
 		for (uint32_t mask = 0x80000000; mask > 0; mask >>= 1){
 			LEDPulse[pulse++] = (leddata.n & mask)? PWM_HI:PWM_LO;
@@ -137,24 +150,43 @@ void SendPulse(){
 }
 
 void SinglePushed() {
-    LightMode++;
-	if(DynamicFlag){
-		if(LightMode > MODE_DYNAMIC_MAX){
-			LightMode = MODE_DYNAMIC_DD;
+	if(LightMode == MODE_DYNAMIC){
+		if(Pattern >= PATTERN_DYNAMIC_MAX) {
+			Pattern = PATTERN_DYNAMIC_DD;
 		}
-	}else{//Static
-		if ( LightMode > MODE_STATIC_MAX) {
-			LightMode = MODE_OFF;
+	}else if(LightMode == MODE_STATIC){//Static
+		Color++;
+		if ( Color >= COLOR_MAX) {
+			Color = COLOR_OFF;
 		}
-		SetLEDmonoColor(LightMode);
+		SetLEDMonoColor(Color);
+	}else if(LightMode == MODE_RAINBOW){
+		if(Color == COLOR_OFF){
+			SetLEDRainbow();
+			Color++;
+		}else{
+			LightMode = MODE_STATIC;
+			Color = COLOR_RED;
+			SetLEDMonoColor(Color);
+		}
+
 	}
 }
+
 void DoublePushed(){
-	LightMode = MODE_DYNAMIC_DD;
-	DynamicFlag = true;
+	LightMode++;
+	if(LightMode >= MODE_MAX){
+		LightMode = MODE_STATIC;
+		Color = COLOR_OFF;
+	}
+	if(LightMode == MODE_RAINBOW){
+		Color = COLOR_OFF;
+		SinglePushFlag = true;
+	}
 }
 
 void LongPushed(){
+
 	BlightFlag = (BlightFlag)? false:true;
 	SendFlag = true;
 }
@@ -196,18 +228,19 @@ int main(void)
   SinglePushFlag = false;
   DoublePushFlag = false;
   SendFlag = false;
-  LightMode = MODE_OFF;
+  Color = COLOR_OFF;
+  LightMode = MODE_STATIC;
   LongPushFlag = false;
   ReleaseIgnoreFlag = false;
   DynamicFlag = false;
   BlightFlag = false;
   LPCount = LPCOUNT_STOP;	//Timer Stopped
-  DPcount = TIM3_COUNT_1SEC;
+  DPCount = TIM3_COUNT_1SEC;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  SetLEDmonoColor(COLOR_OFF);
+  SetLEDMonoColor(COLOR_OFF);
   HAL_TIM_Base_Start_IT(&htim3);
   while (1)
   {
@@ -229,6 +262,14 @@ int main(void)
           LongPushed();
           LongPushFlag = false;
       }
+
+      HAL_SuspendTick();
+#if DEBUG
+      HAL_DBGMCU_EnableDBGSleepMode();
+#endif
+      HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+      HAL_ResumeTick();
+
   }
   /* USER CODE END 3 */
 }
