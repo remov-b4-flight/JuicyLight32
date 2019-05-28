@@ -47,6 +47,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim14;
 DMA_HandleTypeDef hdma_tim1_ch3_up;
 
+#if LEDTYPE == RGBW
 /* USER CODE BEGIN PV */
 const LEDDATA LEDTable[COLOR_MAX] = {
 		//			R		G		B		W
@@ -61,33 +62,59 @@ const LEDDATA LEDTable[COLOR_MAX] = {
 		{.rgbw = {.r=LMAX,.g=LOFF,.b=LQTR,.w=LQTR}},//COLOR_PINK,
 		{.rgbw = {.r=LMAX,.g=LQTR,.b=LOFF,.w=LOFF}},//COLOR_ORANGE,
 };
+#else
+const LEDDATA LEDTable[COLOR_MAX] = {
+	//			R		G		B
+	{.rgb = {.r=LOFF,.g=LOFF,.b=LOFF}},//COLOR_OFF,
+	{.rgb = {.r=LMAX,.g=LOFF,.b=LOFF}},//COLOR_RED,
+	{.rgb = {.r=LOFF,.g=LOFF,.b=LMAX}},//COLOR_BLUE,
+	{.rgb = {.r=LOFF,.g=LMAX,.b=LOFF}},//COLOR_GREEN,
+	{.rgb = {.r=LOFF,.g=LOFF,.b=LOFF}},//COLOR_WHITE,
+	{.rgb = {.r=LHLF,.g=LHLF,.b=LOFF}},//COLOR_YELLOW,
+	{.rgb = {.r=LHLF,.g=LOFF,.b=LHLF}},//COLOR_MAGENTA,
+	{.rgb = {.r=LOFF,.g=LHLF,.b=LHLF}},//COLOR_CYAN,
+	{.rgb = {.r=LMAX,.g=LOFF,.b=LQTR}},//COLOR_PINK,
+	{.rgb = {.r=LMAX,.g=LQTR,.b=LOFF}},//COLOR_ORANGE,
+}
+#endif
 
+#if LED_COUNT == 10
 const uint8_t	LEDRainbow[LED_COUNT]={
 		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE,
 		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE
 };
+#else
+const uint8_t	LEDRainbow[LED_COUNT]={
+//			1			2			3			4			5			6			7			8
+		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE,COLOR_PINK,COLOR_PURPLE,COLOR_WHITE
+		COLOR_RED,COLOR_ORANGE,COLOR_YELLOW,COLOR_GREEN,COLOR_BLUE,COLOR_PINK,COLOR_PURPLE,COLOR_WHITE
+};
+#endif
 
 uint8_t		LEDColor[LED_COUNT];
 uint16_t	LEDPulse[TOTAL_BITS];	//Data formed PWM width send to LED
 
-//Switch and mode control
-uint8_t Color;		//Set from switch
+//Mode control
+uint8_t LightColor;		//Set from switch
 uint8_t LightMode;
-uint8_t	Pattern = PATTERN_DYNAMIC_DD;
+uint8_t	LightPattern = PATTERN_DYNAMIC_DD;
 
+//For switch detection.
 bool	DynamicFlag;
 bool	ReleaseIgnoreFlag; //for passing 'Release' after Long press
 bool	BlightFlag;
-//Driven by Timer3 (8ms interval)
-uint32_t Timer3Count;	//0~250 2000ms count
-uint8_t LPCount;		//Long Push count
-uint8_t DPCount;		//Double Push count
 //
 bool	SinglePushFlag;
 bool	DoublePushFlag;
 bool	LongPushFlag;
 //
 bool	SendFlag;
+
+//Driven by Timer3 (8ms interval)
+uint8_t Timer3Count;	//0~250 2000ms count
+uint8_t Timer3Limit = TIM3_COUNT_2SEC;
+uint8_t LPCount;		//Long Push count
+uint8_t DPCount;		//Double Push count
 
 /* USER CODE END PV */
 
@@ -105,14 +132,63 @@ static void MX_TIM14_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+//Set LEDColor[] array to Mono color(or Rainbow)
 void SetLEDMonoColor(uint8_t mono_color){
-	memset(LEDColor,mono_color,LED_COUNT);
+	if (mono_color == COLOR_RAINBOW){
+		memcpy(LEDColor,LEDRainbow,LED_COUNT);
+	}else{
+		memset(LEDColor,mono_color,LED_COUNT);
+	}
 	SendFlag = true;
 }
 
-void SetLEDRainbow(){
-	memcpy(LEDColor,LEDRainbow,LED_COUNT);
-	SendFlag = true;
+//Initialization for DD pattern
+void PatternDDInit(){
+	LightColor = COLOR_RED;
+	Timer3Limit = TIM3_COUNT_0R5S;
+	SetLEDMonoColor(LightColor);
+}
+
+// Callback function for DD pattern
+void PatternDDCallBack(){
+	LightColor++;
+	if(LightColor >= COLOR_RAINBOW) {
+		LightColor = COLOR_RED;
+	}
+	SetLEDMonoColor(LightColor);
+}
+
+// Initialization function for fade pattern
+void PatternFadeInit(){
+	LightColor = COLOR_RED;
+}
+
+// Callback function for Fade pattern
+void PatternFadeCallBack(){
+
+}
+
+// Function pointer array for Dynamic mode callbacks
+void (*fp[PATTERN_DYNAMIC_MAX])(void)={
+	PatternDDCallBack,
+	PatternFadeCallBack
+};
+
+// Dynamic mode Initialization for each patterns
+void DoPatternInit(){
+	switch (LightPattern){
+		case 	PATTERN_DYNAMIC_DD:
+			PatternDDInit();
+			break;
+		case	PATTERN_DYNAMIC_FADE:
+			PatternFadeInit();
+			break;
+		default:
+			LightMode = MODE_STATIC;
+			LightColor = COLOR_RED;
+			SetLEDMonoColor(LightColor);
+			break;
+	}
 }
 
 //make LEDPulse[] from LEDColor[]
@@ -127,64 +203,70 @@ void Color2Pulse(){
 			if(leddata.rgbw.r > LQTR) leddata.rgbw.r |= LBRIGHT;
 			if(leddata.rgbw.g > LQTR) leddata.rgbw.g |= LBRIGHT;
 			if(leddata.rgbw.b > LQTR) leddata.rgbw.b |= LBRIGHT;
+#if LEDTYPE == RGBW
 			if(leddata.rgbw.w > LQTR) leddata.rgbw.w |= LBRIGHT;
+#endif
 		}
+#if LEDTTYPE == RGBW
 		for (uint32_t mask = 0x80000000; mask > 0; mask >>= 1){
+#else //RGB(24bit)
+		for (uint32_t mask = 0x80000000; mask > 0x80; mask >>= 1){
+#endif
 			LEDPulse[pulse++] = (leddata.n & mask)? PWM_HI:PWM_LO;
 		}
 	}
 }
 
+// Send pulses to LEDs rely on LEDColor[] array
 void SendPulse(){
+
+	//Convert LEDColor[] to LEDPulse[]
 	Color2Pulse();
-	//Make LEDPulse array during that send 'RESET' signal(80us > low data) for LEDs
+
+	//Send 'RESET' signal(80us > low data) for LEDs
 	HAL_TIM_Base_Start(&htim14);
 	htim14.Instance->SR = 0;
 	while((htim14.Instance->SR & TIM_SR_UIF) == 0)
 		;	//wait until timer up.
 	HAL_TIM_Base_Stop(&htim14);
+	//End of RESET
 
 	//Start DMA
 	htim1.Instance->CNT = PWM_HI + 1;
 	HAL_TIM_PWM_Start_DMA(&htim1, TIM_CHANNEL_3,(uint32_t *) LEDPulse, TOTAL_BITS);
 }
 
+// 'Single Pushed' event function
 void SinglePushed() {
 	if(LightMode == MODE_DYNAMIC){
-		if(Pattern >= PATTERN_DYNAMIC_MAX) {
-			Pattern = PATTERN_DYNAMIC_DD;
+		LightPattern++;
+		if(LightPattern >= PATTERN_DYNAMIC_MAX) {
+			LightPattern = PATTERN_DYNAMIC_DD;
 		}
-	}else if(LightMode == MODE_STATIC){//Static
-		Color++;
-		if ( Color >= COLOR_MAX) {
-			Color = COLOR_OFF;
+		DoPatternInit();
+	}else if(LightMode == MODE_STATIC){
+		LightColor++;
+		if ( LightColor >= COLOR_MAX) {
+			LightColor = COLOR_OFF;
+			HAL_TIM_Base_Stop_IT(&htim3);
 		}
-		SetLEDMonoColor(Color);
-	}else if(LightMode == MODE_RAINBOW){
-		if(Color == COLOR_OFF){
-			SetLEDRainbow();
-			Color++;
-		}else{
-			LightMode = MODE_STATIC;
-			Color = COLOR_RED;
-			SetLEDMonoColor(Color);
-		}
-
+		SetLEDMonoColor(LightColor);
 	}
 }
 
+// 'Double Pushed' event function
 void DoublePushed(){
 	LightMode++;
 	if(LightMode >= MODE_MAX){
 		LightMode = MODE_STATIC;
-		Color = COLOR_OFF;
+		LightColor = COLOR_OFF;
+		SetLEDMonoColor(LightColor);
+		return;
 	}
-	if(LightMode == MODE_RAINBOW){
-		Color = COLOR_OFF;
-		SinglePushFlag = true;
-	}
+	DoPatternInit();
 }
 
+// 'Long pushed' event function
 void LongPushed(){
 
 	BlightFlag = (BlightFlag)? false:true;
@@ -228,7 +310,7 @@ int main(void)
   SinglePushFlag = false;
   DoublePushFlag = false;
   SendFlag = false;
-  Color = COLOR_OFF;
+  LightColor = COLOR_OFF;
   LightMode = MODE_STATIC;
   LongPushFlag = false;
   ReleaseIgnoreFlag = false;
@@ -241,7 +323,6 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   SetLEDMonoColor(COLOR_OFF);
-  HAL_TIM_Base_Start_IT(&htim3);
   while (1)
   {
     /* USER CODE END WHILE */

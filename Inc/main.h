@@ -38,6 +38,12 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
+//Determine LED type (RGB or RGBW)
+#ifndef RGB
+#define	LEDTYPE RGBW
+#endif
+
 //LED intensity definition
 #define LBRIGHT	0x80
 #define LMAX	0x40
@@ -47,6 +53,7 @@ extern "C" {
 #define LMIN	0x08
 #define LOFF	0x00
 
+#if LEDTYPE==RGBW
 typedef union leddata_t {
 	uint32_t	n;
 	struct	rgbw_t {
@@ -56,17 +63,27 @@ typedef union leddata_t {
 		uint8_t g;
 	}	rgbw;
 } LEDDATA;
+#else
+typedef union leddata_t {
+	uint32_t	n;
+	struct	rgbw_t {
+		uint8_t	padding;
+		uint8_t	b;
+		uint8_t	r;
+		uint8_t g;
+	}	rgbw;
+} LEDDATA;
+#endif
 
 enum{   //constants for operation mode.
     MODE_STATIC = 0,
-    MODE_RAINBOW,
-	MODE_DYNAMIC
+	MODE_DYNAMIC,
 };
 #define MODE_MAX    2
-enum{
-	PATTERN_DYNAMIC_DD,
-	PATTERN_DYNAMIC_FADE,
 
+enum{
+	PATTERN_DYNAMIC_DD = 0,
+	PATTERN_DYNAMIC_FADE,
 };
 #define PATTERN_DYNAMIC_MAX	2
 
@@ -81,22 +98,30 @@ enum{   //constants for expressing color.
     COLOR_CYAN,
     COLOR_PINK,
     COLOR_ORANGE,
+	COLOR_RAINBOW,
 };
-#define COLOR_MAX 10
+#define COLOR_MAX 11
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
 #define LED_COUNT		10
-#define BITS_PER_LED    32  // 4 (RGBWcolor) * 8bit
+#define BITS_PER_LED    32  // (RGBW) 4 * 8bit
 #define TOTAL_BITS      (LED_COUNT * BITS_PER_LED)
 #define MOD_SW_OFF		1
 #define MOD_SW_ON		0
 
+//TIM3(8ms) based time constants
 #define TIM3_COUNT_2SEC 250
 #define TIM3_COUNT_1SEC 125
-#define TIM3_COUNT_0R3S 38
+#define TIM3_COUNT_0R5S 62
+#define TIM3_COUNT_0R3S 38	//DON'T EDIT using double push detection
+#define TIM3_COUNT_0R25S 31
+#define TIM3_COUNT_0R20S	25
+#define TIM3_COUNT_0R16S	20
+#define TIM3_COUNT_DECHAT 3
 
 #define LPCOUNT_STOP 0
 #define DPCOUNT_CLEAR 0
@@ -118,8 +143,8 @@ void Error_Handler(void);
 
 /* Private defines -----------------------------------------------------------*/
 #define PWM_PERIOD 59
-#define PWM_HI 30
-#define PWM_LO 20
+#define PWM_HI 29
+#define PWM_LO 14
 #define TIM_PERIOD_80uS 4000
 #define TIM_PERIOD_8mS 8000
 #define TIM_PRESC_1uS 47

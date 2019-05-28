@@ -67,7 +67,10 @@ extern uint8_t	Timer3Count; //0~250 2000ms count
 extern bool		SinglePushFlag;
 extern bool		DoublePushFlag;
 extern bool 	LongPushFlag;
-
+extern void (*fp[PATTERN_DYNAMIC_MAX])(void);
+extern uint8_t	LightPattern;
+extern uint8_t	LightMode;
+extern uint32_t	Timer3Limit;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -160,14 +163,15 @@ void EXTI0_1_IRQHandler(void)
 		  ReleaseIgnoreFlag = false;
 		  goto exits;
 	  }
-      if (DPCount >= TIM3_COUNT_0R3S) {
+      if (DPCount >= TIM3_COUNT_0R25S) {
           SinglePushFlag = true;
-      } else{
+      } else if (DPCount >= TIM3_COUNT_DECHAT){
           DoublePushFlag = true;
       }
       DPCount = DPCOUNT_CLEAR;
   }else{
       LPCount = 1;
+      HAL_TIM_Base_Start_IT(&htim3);
   }
 exits:
   /* USER CODE END EXTI0_1_IRQn 0 */
@@ -198,8 +202,11 @@ void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
 	Timer3Count++;
-	if (Timer3Count > TIM3_COUNT_2SEC) {
+	if (Timer3Count > Timer3Limit) {
 		Timer3Count = 0;
+		if(LightMode == MODE_DYNAMIC) {
+			fp[LightPattern]();	//callback
+		}
 	}
 
 	if (LPCount > LPCOUNT_STOP){
@@ -211,7 +218,7 @@ void TIM3_IRQHandler(void)
 			LPCount = LPCOUNT_STOP;
 		}
 	}
-	if (DPCount < TIM3_COUNT_0R3S) {
+	if (DPCount < TIM3_COUNT_0R25S) {
 		DPCount++;
 	}
   /* USER CODE END TIM3_IRQn 0 */
