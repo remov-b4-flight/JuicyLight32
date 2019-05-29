@@ -57,7 +57,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_tim1_ch3_up;
-extern TIM_HandleTypeDef htim1,htim3;
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
 
 extern uint8_t	LPCount; //Timer0Count value when long push determined

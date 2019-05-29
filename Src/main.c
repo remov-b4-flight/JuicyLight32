@@ -47,8 +47,8 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim14;
 DMA_HandleTypeDef hdma_tim1_ch3_up;
 
-#if LEDTYPE == RGBW
 /* USER CODE BEGIN PV */
+#if LEDTYPE == RGBW
 const LEDDATA LEDTable[COLOR_MAX] = {
 		//			R		G		B		W
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LOFF,.w=LOFF}},//COLOR_OFF,
@@ -92,7 +92,7 @@ const uint8_t	LEDRainbow[LED_COUNT]={
 #endif
 
 uint8_t		LEDColor[LED_COUNT];
-uint16_t	LEDPulse[TOTAL_BITS];	//Data formed PWM width send to LED
+uint8_t		LEDPulse[TOTAL_BITS];	//Data formed PWM width send to LED
 
 //Mode control
 uint8_t LightColor;		//Set from switch
@@ -283,6 +283,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
