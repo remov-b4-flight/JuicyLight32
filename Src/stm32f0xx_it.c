@@ -164,7 +164,7 @@ void EXTI0_1_IRQHandler(void)
 		  ReleaseIgnoreFlag = false;
 		  goto exits;
 	  }
-      if (DPCount >= TIM3_COUNT_0R25S) {
+      if (DPCount >= DPCOUNT_PERIOD) {
           SinglePushFlag = true;
       } else if (DPCount >= TIM3_COUNT_DECHAT){
           DoublePushFlag = true;
@@ -219,7 +219,7 @@ void TIM3_IRQHandler(void)
 			LPCount = LPCOUNT_STOP;
 		}
 	}
-	if (DPCount < TIM3_COUNT_0R25S) {
+	if (DPCount < DPCOUNT_PERIOD) {
 		DPCount++;
 	}
   /* USER CODE END TIM3_IRQn 0 */

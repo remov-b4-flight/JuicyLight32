@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 //LED intensity definition
+#define LFFH	0xFF
 #define LBRIGHT	0x80
 #define LMAX	0x40
 #define L43		0x28
@@ -120,9 +121,11 @@ enum{   //constants for expressing color.
 #define TIM3_COUNT_0R3S 38	//DON'T EDIT using double push detection
 #define TIM3_COUNT_0R25S 31
 #define TIM3_COUNT_0R20S	25
+#define TIM3_COUNT_0R18S	22
 #define TIM3_COUNT_0R16S	20
 #define TIM3_COUNT_DECHAT 3
 
+#define DPCOUNT_PERIOD TIM3_COUNT_0R18S
 #define LPCOUNT_STOP 0
 #define DPCOUNT_CLEAR 0
 /* USER CODE END EC */

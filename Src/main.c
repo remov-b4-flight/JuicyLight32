@@ -346,8 +346,10 @@ int main(void)
       }
 
       HAL_SuspendTick();
-#if DEBUG
-      HAL_DBGMCU_EnableDBGSleepMode();
+#ifdef DEBUG
+	#if 0 //Not exist MCUDBG_CR.sleep bit for STM32F0
+		  HAL_DBGMCU_EnableDBGSleepMode();
+	#endif
 #endif
       HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
       HAL_ResumeTick();
