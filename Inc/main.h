@@ -108,7 +108,7 @@ enum{   //constants for expressing color.
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
-#define LED_COUNT		10
+#define LED_COUNT		16
 #define BITS_PER_LED    32  // (RGBW) 4 * 8bit
 #define TOTAL_BITS      (LED_COUNT * BITS_PER_LED)
 #define MOD_SW_OFF		1
@@ -117,15 +117,15 @@ enum{   //constants for expressing color.
 //TIM3(8ms) based time constants
 #define TIM3_COUNT_2SEC 250
 #define TIM3_COUNT_1SEC 125
-#define TIM3_COUNT_0R5S 62
-#define TIM3_COUNT_0R3S 38	//DON'T EDIT using double push detection
-#define TIM3_COUNT_0R25S 31
+#define TIM3_COUNT_0R5S		62
+#define TIM3_COUNT_0R3S		38
+#define TIM3_COUNT_0R25S	31
 #define TIM3_COUNT_0R20S	25
 #define TIM3_COUNT_0R18S	22
 #define TIM3_COUNT_0R16S	20
 #define TIM3_COUNT_DECHAT 3
 
-#define DPCOUNT_PERIOD TIM3_COUNT_0R18S
+#define DPCOUNT_PERIOD TIM3_COUNT_0R25S
 #define LPCOUNT_STOP 0
 #define DPCOUNT_CLEAR 0
 /* USER CODE END EC */
