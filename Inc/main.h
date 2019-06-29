@@ -47,9 +47,9 @@ extern "C" {
 //LED intensity definition
 #define LFFH	0xFF
 #define LBRIGHT	0x80
-#define LMAX	0x40
-#define L43		0x28
-#define LHLF	0x20
+#define LMAX	0x78
+#define L43		0x58
+#define LHLF	0x38
 #define LQTR	0x10
 #define LMIN	0x08
 #define LOFF	0x00
@@ -120,6 +120,7 @@ enum{   //constants for expressing color.
 #define TIM3_COUNT_0R5S		62
 #define TIM3_COUNT_0R3S		38
 #define TIM3_COUNT_0R25S	31
+#define TIM3_COUNT_0R22S	28
 #define TIM3_COUNT_0R20S	25
 #define TIM3_COUNT_0R18S	22
 #define TIM3_COUNT_0R16S	20
