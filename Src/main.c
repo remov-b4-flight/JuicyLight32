@@ -56,7 +56,11 @@ const LEDDATA LEDTable[COLOR_MAX] = {
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LMAX,.w=LOFF}},//COLOR_BLUE,
 		{.rgbw = {.r=LOFF,.g=LMAX,.b=LOFF,.w=LOFF}},//COLOR_GREEN,
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LOFF,.w=LMAX}},//COLOR_WHITE,
+#if 0	//for tracing paper color collection
 		{.rgbw = {.r=LHLF,.g=LHLF,.b=LOFF,.w=LOFF}},//COLOR_YELLOW,
+#else
+		{.rgbw = {.r=LHLF,.g=((LHLF/4)*3),.b=LOFF,.w=LOFF}},//COLOR_YELLOW,
+#endif
 		{.rgbw = {.r=LHLF,.g=LOFF,.b=LHLF,.w=LOFF}},//COLOR_MAGENTA,
 		{.rgbw = {.r=LOFF,.g=LHLF,.b=LHLF,.w=LOFF}},//COLOR_CYAN,
 		{.rgbw = {.r=LMAX,.g=LOFF,.b=LQTR,.w=LMIN}},//COLOR_PINK,
