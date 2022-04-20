@@ -80,28 +80,28 @@ enum{   //constants for operation mode.
     MODE_STATIC = 0,
 	MODE_DYNAMIC,
 };
-#define MODE_MAX    2
+#define MODE_COUNT    2
 
 enum{
 	PATTERN_DYNAMIC_DD = 0,
-	PATTERN_DYNAMIC_FADE,
+	PATTERN_DYNAMIC_ROTATE,
 };
-#define PATTERN_DYNAMIC_MAX	2
+#define PATTERN_DYNAMIC_COUNT	2
 
 enum{   //constants for expressing color.
 	COLOR_OFF = 0,
-	COLOR_RED,
-    COLOR_BLUE,
-    COLOR_GREEN,
-    COLOR_WHITE,
-    COLOR_YELLOW,
-    COLOR_MAGENTA,
-    COLOR_CYAN,
-    COLOR_PINK,
-    COLOR_ORANGE,
-	COLOR_RAINBOW,
+	COLOR_RED = 1,
+    COLOR_BLUE = 2,
+    COLOR_GREEN =3,
+    COLOR_WHITE = 4,
+    COLOR_YELLOW = 5,
+    COLOR_MAGENTA = 6,
+    COLOR_CYAN = 7,
+    COLOR_PINK = 8,
+    COLOR_ORANGE = 9,
+	COLOR_RAINBOW = 10,
 };
-#define COLOR_MAX 11
+#define COLOR_COUNT 11
 
 /* USER CODE END ET */
 

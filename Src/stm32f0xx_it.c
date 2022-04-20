@@ -68,7 +68,7 @@ extern uint8_t	Timer3Count; //0~250 2000ms count
 extern bool		SinglePushFlag;
 extern bool		DoublePushFlag;
 extern bool 	LongPushFlag;
-extern void (*fp[PATTERN_DYNAMIC_MAX])(void);
+extern void (*fp[PATTERN_DYNAMIC_COUNT])(void);
 extern uint8_t	LightPattern;
 extern uint8_t	LightMode;
 extern uint32_t	Timer3Limit;

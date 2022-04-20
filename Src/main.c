@@ -49,16 +49,16 @@ DMA_HandleTypeDef hdma_tim1_ch3_up;
 
 /* USER CODE BEGIN PV */
 #if LEDTYPE == RGBW
-const LEDDATA LEDTable[COLOR_MAX] = {
+const LEDDATA LEDTable[COLOR_COUNT] = {
 		//			R		G		B		W
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LOFF,.w=LOFF}},//COLOR_OFF,
 		{.rgbw = {.r=LMAX,.g=LOFF,.b=LOFF,.w=LOFF}},//COLOR_RED,
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LMAX,.w=LOFF}},//COLOR_BLUE,
 		{.rgbw = {.r=LOFF,.g=LMAX,.b=LOFF,.w=LOFF}},//COLOR_GREEN,
 		{.rgbw = {.r=LOFF,.g=LOFF,.b=LOFF,.w=LMAX}},//COLOR_WHITE,
-#if 0	//for tracing paper color collection
+#if 1	//for transaparent tube
 		{.rgbw = {.r=LHLF,.g=LHLF,.b=LOFF,.w=LOFF}},//COLOR_YELLOW,
-#else
+#else	//for tracing paper color collection
 		{.rgbw = {.r=LHLF,.g=((LHLF/4)*3),.b=LOFF,.w=LOFF}},//COLOR_YELLOW,
 #endif
 		{.rgbw = {.r=LHLF,.g=LOFF,.b=LHLF,.w=LOFF}},//COLOR_MAGENTA,
@@ -165,19 +165,37 @@ void PatternDDCallBack(){
 }
 
 // Initialization function for fade pattern
-void PatternFadeInit(){
-	LightColor = COLOR_RED;
+void PatternRotateInit(){
+	LightColor = COLOR_RAINBOW;
+	SetLEDMonoColor(LightColor);
 }
 
 // Callback function for Fade pattern
-void PatternFadeCallBack(){
-
+void PatternRotateCallBack(){
+	uint8_t temp = LEDColor[ (LED_COUNT-1) ];
+	LEDColor[ (LED_COUNT-1) ] = LEDColor[ (LED_COUNT-2) ];
+	LEDColor[ (LED_COUNT-2) ] = LEDColor[ (LED_COUNT-3) ];
+	LEDColor[ (LED_COUNT-3) ] = LEDColor[ (LED_COUNT-4) ];
+	LEDColor[ (LED_COUNT-4) ] = LEDColor[ (LED_COUNT-5) ];
+	LEDColor[ (LED_COUNT-5) ] = LEDColor[ (LED_COUNT-6) ];
+	LEDColor[ (LED_COUNT-6) ] = LEDColor[ (LED_COUNT-7) ];
+	LEDColor[ (LED_COUNT-7) ] = LEDColor[ (LED_COUNT-8) ];
+	LEDColor[ (LED_COUNT-8) ] = LEDColor[ (LED_COUNT-9) ];
+	LEDColor[ (LED_COUNT-9) ] = LEDColor[ (LED_COUNT-10) ];
+	LEDColor[ (LED_COUNT-10) ] = LEDColor[ (LED_COUNT-11) ];
+	LEDColor[ (LED_COUNT-11) ] = LEDColor[ (LED_COUNT-12) ];
+	LEDColor[ (LED_COUNT-12) ] = LEDColor[ (LED_COUNT-13) ];
+	LEDColor[ (LED_COUNT-13) ] = LEDColor[ (LED_COUNT-14) ];
+	LEDColor[ (LED_COUNT-14) ] = LEDColor[ (LED_COUNT-15) ];
+	LEDColor[ (LED_COUNT-15) ] = LEDColor[ (LED_COUNT-LED_COUNT) ];
+	LEDColor[ (LED_COUNT-LED_COUNT) ] =	temp;
+	SendFlag = true;
 }
 
 // Function pointer array for Dynamic mode callbacks
-void (*fp[PATTERN_DYNAMIC_MAX])(void)={
+void (*fp[PATTERN_DYNAMIC_COUNT])(void)={
 	PatternDDCallBack,
-	PatternFadeCallBack
+	PatternRotateCallBack
 };
 
 // Dynamic mode Initialization for each patterns
@@ -186,8 +204,8 @@ void DoPatternInit(){
 		case 	PATTERN_DYNAMIC_DD:
 			PatternDDInit();
 			break;
-		case	PATTERN_DYNAMIC_FADE:
-			PatternFadeInit();
+		case	PATTERN_DYNAMIC_ROTATE:
+			PatternRotateInit();
 			break;
 		default:
 			LightMode = MODE_STATIC;
@@ -246,13 +264,13 @@ void SendPulse(){
 void SinglePushed() {
 	if(LightMode == MODE_DYNAMIC){
 		LightPattern++;
-		if(LightPattern >= PATTERN_DYNAMIC_MAX) {
+		if(LightPattern >= PATTERN_DYNAMIC_COUNT) {
 			LightPattern = PATTERN_DYNAMIC_DD;
 		}
 		DoPatternInit();
 	}else if(LightMode == MODE_STATIC){
 		LightColor++;
-		if ( LightColor >= COLOR_MAX) {
+		if ( LightColor > (COLOR_COUNT-1) ) {
 			LightColor = COLOR_OFF;
 			HAL_TIM_Base_Stop_IT(&htim3);
 		}
@@ -263,7 +281,7 @@ void SinglePushed() {
 // 'Double Pushed' event function
 void DoublePushed(){
 	LightMode++;
-	if(LightMode >= MODE_MAX){
+	if(LightMode > (MODE_COUNT-1) ){
 		LightMode = MODE_STATIC;
 		LightColor = COLOR_OFF;
 		SetLEDMonoColor(LightColor);
@@ -289,7 +307,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -373,7 +391,7 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -386,7 +404,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
@@ -551,10 +569,10 @@ static void MX_TIM14_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
@@ -616,7 +634,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(char *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
