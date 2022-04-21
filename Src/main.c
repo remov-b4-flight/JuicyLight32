@@ -96,7 +96,13 @@ const uint8_t	LEDRainbow[LED_COUNT]={
 
 };
 #endif
+const uint8_t	LEDRainbowRotate[LED_COUNT]={
+//			1			2			3			4			5			6			7			8
+		COLOR_WHITE,COLOR_MAGENTA,COLOR_PINK,COLOR_BLUE,COLOR_GREEN,COLOR_YELLOW,COLOR_ORANGE,COLOR_RED,
+		COLOR_WHITE,COLOR_MAGENTA,COLOR_PINK,COLOR_BLUE,COLOR_GREEN,COLOR_YELLOW,COLOR_ORANGE,COLOR_RED,
+//			9			10			11			12			13			14			15			16
 
+};
 uint8_t		LEDColor[LED_COUNT];
 uint8_t		LEDPulse[TOTAL_BITS];	//Data formed PWM width send to LED
 
@@ -139,9 +145,11 @@ static void MX_TIM14_Init(void);
 /* USER CODE BEGIN 0 */
 
 //Set LEDColor[] array to Mono color(or Rainbow)
-void SetLEDMonoColor(uint8_t mono_color){
+void SetLEDColors(uint8_t mono_color){
 	if (mono_color == COLOR_RAINBOW){
-		memcpy(LEDColor,LEDRainbow,LED_COUNT);
+		memcpy(LEDColor,
+				(LightPattern == PATTERN_DYNAMIC_ROTATE)?  LEDRainbowRotate:LEDRainbow,
+				LED_COUNT);
 	}else{
 		memset(LEDColor,mono_color,LED_COUNT);
 	}
@@ -152,7 +160,7 @@ void SetLEDMonoColor(uint8_t mono_color){
 void PatternDDInit(){
 	LightColor = COLOR_RED;
 	Timer3Limit = TIM3_COUNT_0R5S;
-	SetLEDMonoColor(LightColor);
+	SetLEDColors(LightColor);
 }
 
 // Callback function for DD pattern
@@ -161,13 +169,13 @@ void PatternDDCallBack(){
 	if(LightColor >= COLOR_RAINBOW) {
 		LightColor = COLOR_RED;
 	}
-	SetLEDMonoColor(LightColor);
+	SetLEDColors(LightColor);
 }
 
 // Initialization function for fade pattern
 void PatternRotateInit(){
 	LightColor = COLOR_RAINBOW;
-	SetLEDMonoColor(LightColor);
+	SetLEDColors(LightColor);
 }
 
 // Callback function for Fade pattern
@@ -210,7 +218,7 @@ void DoPatternInit(){
 		default:
 			LightMode = MODE_STATIC;
 			LightColor = COLOR_RED;
-			SetLEDMonoColor(LightColor);
+			SetLEDColors(LightColor);
 			break;
 	}
 }
@@ -274,7 +282,7 @@ void SinglePushed() {
 			LightColor = COLOR_OFF;
 			HAL_TIM_Base_Stop_IT(&htim3);
 		}
-		SetLEDMonoColor(LightColor);
+		SetLEDColors(LightColor);
 	}
 }
 
@@ -284,7 +292,7 @@ void DoublePushed(){
 	if(LightMode > (MODE_COUNT-1) ){
 		LightMode = MODE_STATIC;
 		LightColor = COLOR_OFF;
-		SetLEDMonoColor(LightColor);
+		SetLEDColors(LightColor);
 		return;
 	}
 	DoPatternInit();
@@ -347,7 +355,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  SetLEDMonoColor(COLOR_OFF);
+  SetLEDColors(COLOR_OFF);
   while (1)
   {
     /* USER CODE END WHILE */
