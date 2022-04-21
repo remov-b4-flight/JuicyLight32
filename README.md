@@ -1,2 +1,2 @@
-# Juicylight32
+# JuicyLight32
 USB color light embeded project.
